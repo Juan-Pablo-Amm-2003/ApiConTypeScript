@@ -8,7 +8,10 @@ import errorHandler from "./src/middleware/errors/errorHeanler";
 import indexRoutes from "./src/Routes/indexRoutes";
 const app = express();
 
+
+
 dotenv.config();
+
 
 // Middleware
 app.use(express.json());
@@ -29,7 +32,7 @@ app.use(
 
 // Configuración de CORS
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: process.env.URL_FRONT,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
@@ -45,3 +48,9 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Listening on PORT ${PORT}`);
 });
+
+console.log(process.env.CLOUDINARY_CLOUD_NAME);
+console.log(process.env.CLOUDINARY_API_KEY);
+console.log(process.env.CLOUDINARY_API_SECRET);
+console.log(process.env.PORT);
+

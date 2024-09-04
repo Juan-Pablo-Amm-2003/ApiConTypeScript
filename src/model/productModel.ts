@@ -8,7 +8,7 @@ export class ProductModel extends Model {
   public price!: number;
   public imagePath!: string;
   public category_id!: number;
-  public stock!: number; // Añadido el campo `stock`
+  public stock!: number; 
 }
 
 ProductModel.init(
@@ -40,8 +40,8 @@ ProductModel.init(
     },
     stock: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Asegúrate de que esto coincide con la estructura de la base de datos
-      defaultValue: 0, // O cualquier valor por defecto que desees
+      allowNull: false,
+      defaultValue: 0, 
     },
   },
   {
