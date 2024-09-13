@@ -86,3 +86,5 @@ app.listen(PORT, async () => {
   // Llamar a la función para crear el administrador al iniciar el servidor
   await createAdminUser();
 });
+
+export default app

@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/app.js",
   "scripts": {
+    "vercel-build": "echo hello",
     "dev": "nodemon --exec ts-node app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
