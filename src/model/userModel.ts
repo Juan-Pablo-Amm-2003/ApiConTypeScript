@@ -1,109 +1,114 @@
-import { DataTypes, Model, Optional } from "sequelize";
+import { Model, DataTypes, Optional } from "sequelize";
+import bcrypt from "bcrypt";
 import sequelize from "../config/sqlConfig";
-import bcrypt from "bcrypt"; // Usar bcrypt en lugar de bcryptjs
 
+// Definir la interfaz para los atributos del usuario
 interface UserAttributes {
   id: number;
   username: string;
+  email: string;
   password: string;
   isAdmin: boolean;
-  email: string;
-  phone: string;
-  addressLine1: string;
+  phone?: string;
+  addressLine1?: string;
   addressLine2?: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
+// Definir una interfaz para los atributos opcionales (cuando se crea un usuario sin ID)
+interface UserCreationAttributes
+  extends Optional<UserAttributes, "id" | "createdAt" | "updatedAt"> {}
 
+// Definir la clase User que extiende Sequelize Model con los atributos y los opcionales
 class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
   public id!: number;
   public username!: string;
+  public email!: string;
   public password!: string;
   public isAdmin!: boolean;
-  public email!: string;
-  public phone!: string;
-  public addressLine1!: string;
+  public phone?: string;
+  public addressLine1?: string;
   public addressLine2?: string;
-  public city!: string;
-  public state!: string;
-  public postalCode!: string;
-  public country!: string;
+  public city?: string;
+  public state?: string;
+  public postalCode?: string;
+  public country?: string;
+  public createdAt!: Date;
+  public updatedAt!: Date;
+  role: any;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-
+  // Método para hashear la contraseña
   public static async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 10);
   }
 
+  // Método para validar la contraseña
   public async validatePassword(password: string): Promise<boolean> {
     return bcrypt.compare(password, this.password);
   }
 }
 
+// Definir el modelo con las columnas de la tabla users
 User.init(
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.INTEGER.UNSIGNED,
       autoIncrement: true,
       primaryKey: true,
     },
     username: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
+    email: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      unique: true,
+    },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     isAdmin: {
       type: DataTypes.BOOLEAN,
-      allowNull: true,
-      defaultValue: false,
-    },
-    email: {
-      type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        isEmail: true,
-      },
+      defaultValue: false, // Por defecto, no es administrador
     },
     phone: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(20),
+      allowNull: true,
     },
     addressLine1: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     addressLine2: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
     city: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     state: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     postalCode: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(10),
+      allowNull: true,
     },
     country: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: DataTypes.STRING(50),
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -119,8 +124,6 @@ User.init(
   {
     sequelize,
     tableName: "users",
-    underscored: false,
-    timestamps: true,
   }
 );
 

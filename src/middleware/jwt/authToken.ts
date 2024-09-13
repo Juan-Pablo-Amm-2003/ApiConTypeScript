@@ -1,4 +1,3 @@
-// authToken.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -6,25 +5,44 @@ import dotenv from "dotenv";
 dotenv.config();
 const JWT_SECRET: string = process.env.JWT_SECRET || "default_secret";
 
+// Interface extendida para incluir el usuario autenticado
 interface UserRequest extends Request {
-  user?: any;
+  user?: { id: number; email: string; isAdmin: boolean };
 }
 
+// Middleware para autenticar el token
 export const authenticateToken = (
   req: UserRequest,
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers["authorization"];
+  const authHeader = req.headers.authorization;
+  console.log("Authorization Header:", authHeader); // Depuración
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (token == null) return res.sendStatus(401);
+  if (!token) {
+    return res.status(401).json({ message: "Token no proporcionado" });
+  }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      return res.sendStatus(403);
+      return res.status(403).json({ message: "Token no válido" });
     }
-    req.user = user;
+    console.log("Decoded User:", user); // Depuración
+    req.user = user as { id: number; email: string; isAdmin: boolean };
     next();
   });
+};
+
+
+// Middleware para verificar permisos de administrador
+export const isAdmin = (
+  req: UserRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ message: "Acceso denegado" });
+  }
+  next();
 };

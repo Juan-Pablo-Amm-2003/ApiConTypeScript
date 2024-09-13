@@ -7,7 +7,7 @@
     "esModuleInterop": true,
     "strict": true
   },
-  "include": ["app.ts", "src/**/*.ts"], // Asegúrate de incluir todos los archivos TypeScript
+  "include": ["app.ts", "src/**/*.ts", "src/Emails/sendEmail.js", "src/Emails/emailController.ts"], // Asegúrate de incluir todos los archivos TypeScript
   "exclude": ["node_modules"]
 }
 

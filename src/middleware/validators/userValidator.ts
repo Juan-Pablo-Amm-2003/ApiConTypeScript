@@ -2,16 +2,25 @@ import { body, validationResult } from "express-validator";
 import { Request, Response, NextFunction } from "express";
 
 // Definir las validaciones para la creación de usuarios
+
 export const validateUserCreation = [
-  body("username").isString().notEmpty(),
-  body("password").isString().notEmpty(),
-  body("email").isEmail(),
-  body("phone").isString().notEmpty(),
-  body("addressLine1").isString().notEmpty(),
-  body("city").isString().notEmpty(),
-  body("state").isString().notEmpty(),
-  body("postalCode").isString().notEmpty(),
-  body("country").isString().notEmpty(),
+  body("username").notEmpty().withMessage("Username is required"),
+  body("email").isEmail().withMessage("Invalid email format"),
+  body("password")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+  body("phone").optional().isString().withMessage("Phone must be a string"),
+  body("addressLine1")
+    .optional()
+    .isString()
+    .withMessage("Address Line 1 must be a string"),
+  body("city").optional().isString().withMessage("City must be a string"),
+  body("state").optional().isString().withMessage("State must be a string"),
+  body("postalCode")
+    .optional()
+    .isString()
+    .withMessage("Postal Code must be a string"),
+  body("country").optional().isString().withMessage("Country must be a string"),
 ];
 
 // Middleware para manejar los errores de validación

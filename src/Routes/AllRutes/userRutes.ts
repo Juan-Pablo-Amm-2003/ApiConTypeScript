@@ -12,7 +12,7 @@ import {
   validateUserCreation,
   validateRequest,
 } from "../../middleware/validators/userValidator";
-import { authenticateToken } from "../../middleware/jwt/authToken";
+import { authenticateToken, isAdmin } from "../../middleware/jwt/authToken";
 
 const router = Router();
 
@@ -21,7 +21,7 @@ router.post("/login", loginUser);
 router.post("/register", validateUserCreation, validateRequest, registerUser);
 
 // Rutas protegidas
-router.get("/", authenticateToken, getAllUsers);
+router.get("/", getAllUsers);
 router.get("/:id", authenticateToken, getUserById);
 router.post(
   "/",
@@ -34,9 +34,8 @@ router.put(
   "/:id",
   authenticateToken,
   validateUserCreation,
-  validateRequest,
   updateUser
 );
-router.delete("/:id", authenticateToken, deleteUser);
+router.delete("/:id", authenticateToken, isAdmin, deleteUser);
 
 export default router;
