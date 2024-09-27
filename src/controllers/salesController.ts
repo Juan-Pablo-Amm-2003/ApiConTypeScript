@@ -12,6 +12,8 @@ interface CloudinaryUploadResult {
   // Agrega otras propiedades que necesites del resultado de la carga
 }
 
+
+
 const generatePDFBuffer = (
   cart: any[],
   total: number,
@@ -39,9 +41,9 @@ const generatePDFBuffer = (
         align: "center",
         valign: "center",
       })
-      .moveDown()
-      .fontSize(18)
-      .text("Recibo de Compra", { align: "center" })
+      .moveDown(5) // Añadir margen de 5 rem (aproximadamente 10 en puntos) después del logo
+      .fontSize(22)
+      .text("Recibo de Compra", { align: "center", underline: true })
       .moveDown(1);
 
     // Customer details
@@ -51,6 +53,15 @@ const generatePDFBuffer = (
       .text(`Fecha: ${new Date().toLocaleDateString()}`, { align: "left" })
       .moveDown();
 
+    // Introduction
+    doc
+      .moveDown(2) // Añadir margen superior antes de la introducción
+      .fontSize(12)
+      .text("Gracias por su compra. Aquí está el resumen de su pedido:", {
+        align: "left",
+      })
+      .moveDown();
+
     // Table of purchased items
     doc
       .fontSize(14)
@@ -58,29 +69,53 @@ const generatePDFBuffer = (
       .moveDown()
       .fontSize(12);
 
+    const tableTop = doc.y + 20; // Ajustar la posición de la tabla
+
+    // Draw table headers
+    doc.text("Artículo", 50, tableTop);
+    doc.text("Precio", 200, tableTop, { width: 90, align: "right" });
+    doc.text("Cantidad", 300, tableTop, { width: 90, align: "right" });
+    doc.moveDown();
+
+    // Draw table rows
     cart.forEach((item: any) => {
-      doc.text(`- ${item.name}: $${item.price.toFixed(2)} x ${item.quantity}`);
+      const itemY = doc.y; // Obtener la posición actual de y
+      doc.text(item.name, 50, itemY);
+      doc.text(`$${item.price.toFixed(2)}`, 200, itemY, {
+        width: 90,
+        align: "right",
+      });
+      doc.text(`${item.quantity}`, 300, itemY, { width: 90, align: "right" });
+      doc.moveDown(); // Mover hacia abajo para el siguiente item
     });
 
     doc
-      .moveDown()
+      .moveDown(5) // Aumentar el espacio después de la tabla
       .fontSize(12)
-      .text(`Total: $${total.toFixed(2)}`, { align: "right" });
+      .text(`Total: $${total.toFixed(2)}`, { align: "right", underline: true });
 
-    // Footer with contact information
+    // Footer with additional information
     doc
       .moveDown(2)
       .fontSize(10)
-      .text("Gracias por tu compra!", { align: "center" })
-      .text("Para más información, visita nuestro sitio web.", {
+      .text("Gracias por su compra!", { align: "center" })
+      .text("Para más información, visita nuestro sitio web:", {
+        align: "center",
+      })
+      .text("www.ejemplo.com", { align: "center", underline: true })
+      .moveDown(1)
+      .text("Si tienes alguna pregunta, no dudes en contactarnos:", {
         align: "center",
       })
       .text("contacto@empresa.com", { align: "center" });
 
+    // Add a border at the bottom of the page
+    const yBottom = doc.y + 30;
+    doc.moveTo(50, yBottom).lineTo(550, yBottom).stroke();
+
     doc.end();
   });
 };
-
 // Función para subir el PDF a Cloudinary
 const uploadToCloudinary = (
   buffer: Buffer

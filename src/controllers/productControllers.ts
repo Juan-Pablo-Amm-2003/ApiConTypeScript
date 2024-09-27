@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { ProductModel } from "../model/productModel";
 import { Op } from "sequelize";
+import { ValidationError, DatabaseError } from "sequelize";
+
 import cloudinary from "../config/cloudinaryConfig";
 import streamifier from "streamifier";
+import { error } from "console";
 
 class ProductController {
   // Obtener todos los productos
@@ -112,7 +115,6 @@ class ProductController {
     }
   }
 
-  // Crear un producto
   static async create(
     req: Request,
     res: Response,
@@ -120,36 +122,36 @@ class ProductController {
   ): Promise<void> {
     try {
       const { name, description, price, category_id, stock } = req.body;
-      let imagePath = "";
 
-      // Verificar si se ha subido un archivo
-      if (req.file?.buffer) {
-        try {
-          // Subida de la imagen a Cloudinary usando un stream
-          const result = await new Promise<{ secure_url: string }>(
-            (resolve, reject) => {
-              const uploadStream = cloudinary.uploader.upload_stream(
-                { folder: "products" },
-                (error, result) => {
-                  if (error) reject(error);
-                  else if (result) resolve(result as { secure_url: string });
-                }
-              );
-              streamifier.createReadStream(req.file!.buffer).pipe(uploadStream);
-            }
-          );
-          imagePath = result.secure_url;
-          console.log("Image uploaded to Cloudinary:", imagePath);
-        } catch (uploadError) {
-          console.error("Error uploading to Cloudinary:", uploadError);
-          res.status(500).json({ error: "Error uploading image" });
-          return;
-        }
-      } else {
-        console.log("No file uploaded or file buffer is undefined.");
+      if (!name || !description || !price || !category_id) {
+        const errores = console.log(error);
+        return errores;
       }
 
-      // Crear el producto en la base de datos
+      let imagePath = "";
+
+      if (req.file) {
+        const buffer = req.file.buffer;
+
+        await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: "your_folder_name" },
+            (error: any, result: any) => {
+              if (error) {
+                console.error("Error uploading to Cloudinary:", error);
+                return reject(error);
+              }
+              imagePath = result.secure_url;
+              resolve(undefined);
+            }
+          );
+
+          streamifier.createReadStream(buffer).pipe(uploadStream);
+        });
+      } else {
+        console.log("No file uploaded.");
+      }
+
       const newProduct = await ProductModel.create({
         name,
         description,
@@ -159,10 +161,6 @@ class ProductController {
         stock: stock || 0,
       });
 
-      console.log(
-        "Product saved to database with image path:",
-        newProduct.imagePath
-      );
       res
         .status(201)
         .json({ message: "Product created successfully", product: newProduct });
@@ -178,14 +176,17 @@ class ProductController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    console.log("Delete request received for product ID:", req.params.id); // Log de entrada
     try {
       const id = parseInt(req.params.id, 10);
       const product = await ProductModel.findByPk(id);
       if (!product) {
+        console.log("Product not found"); // Log si no se encuentra el producto
         res.status(404).json({ message: "Product not found" });
         return;
       }
       await product.destroy();
+      console.log("Product deleted successfully"); // Log de éxito
       res.status(200).json({ message: "Product deleted successfully" });
     } catch (error) {
       console.error("Error deleting product:", error);

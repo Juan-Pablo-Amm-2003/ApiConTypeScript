@@ -16,9 +16,9 @@ router.post("/login", loginUser);
 router.post("/register", validateUserCreation, validateRequest, registerUser);
 
 // Rutas protegidas
-router.use("/sales", authenticateToken, salesRouter);
-router.use("/categories", authenticateToken, categoriesRouter);
-router.use("/products", authenticateToken, productRoutes);
-router.use("/users", authenticateToken, userRoutes);
+router.use("/sales", salesRouter);
+router.use("/categories", categoriesRouter);
+router.use("/products", productRoutes);
+router.use("/users", userRoutes);
 
 export default router;

@@ -36,6 +36,6 @@ router.put(
   validateUserCreation,
   updateUser
 );
-router.delete("/:id", authenticateToken, isAdmin, deleteUser);
+router.delete("/:id",  deleteUser);
 
 export default router;

@@ -17,32 +17,37 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
-  console.log("Authorization Header:", authHeader); // Depuración
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "Token no proporcionado" });
   }
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       return res.status(403).json({ message: "Token no válido" });
     }
-    console.log("Decoded User:", user); // Depuración
-    req.user = user as { id: number; email: string; isAdmin: boolean };
+
+    const { id, email, role } = decoded as {
+      id: number;
+      email: string;
+      role: string;
+    };
+    req.user = { id, email, isAdmin: role === "admin" }; // Verifica si el role es 'admin'
     next();
   });
 };
 
-
-// Middleware para verificar permisos de administrador
+// Middleware para verificar si es admin
 export const isAdmin = (
   req: UserRequest,
   res: Response,
   next: NextFunction
 ) => {
   if (!req.user?.isAdmin) {
-    return res.status(403).json({ message: "Acceso denegado" });
+    return res
+      .status(403)
+      .json({ message: "Acceso denegado, no eres administrador" });
   }
   next();
 };

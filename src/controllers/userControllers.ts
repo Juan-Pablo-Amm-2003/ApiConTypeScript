@@ -7,7 +7,6 @@ import dotenv from "dotenv";
 dotenv.config();
 const JWT_SECRET: string = process.env.JWT_SECRET || "default_secret";
 
-
 export const getAllUsers = async (
   req: Request,
   res: Response,
@@ -45,23 +44,22 @@ export const createUser = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-const {
-  username,
-  password,
-  isAdmin = false, 
-  email,
-  phone,
-  addressLine1,
-  addressLine2,
-  city,
-  state,
-  postalCode,
-  country,
-} = req.body;
-
+    const {
+      username,
+      password,
+      isAdmin = false,
+      email,
+      phone,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+      country,
+    } = req.body;
 
     // Encriptar la contraseña antes de guardarla
-    const hashedPassword = await User.hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10); // Cambia a User.hashPassword si tienes un método específico
 
     // Crear un nuevo usuario con la contraseña encriptada
     const user = await User.create({
@@ -120,7 +118,7 @@ export const updateUser = async (
 
     if (password) {
       // Encriptar la nueva contraseña si se proporciona
-      updates.password = await User.hashPassword(password);
+      updates.password = await bcrypt.hash(password, 10); // Cambia a User.hashPassword si tienes un método específico
     }
 
     // Actualizar el usuario
@@ -160,35 +158,49 @@ export const deleteUser = async (
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Email y contraseña son obligatorios" });
+  }
+
   try {
+    console.log("Email recibido:", email);
+    console.log("Contraseña recibida:", password);
+
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      console.log("Usuario no encontrado");
+      return res.status(401).json({ message: "Credenciales inválidas" });
+    }
+
+    console.log("Usuario encontrado:", user.username);
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      console.log("La contraseña no coincide");
+      return res.status(401).json({ message: "Credenciales inválidas" });
+    }
 
-    // Generar token
+    // Generar el token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.isAdmin ? "admin" : "user" }, // Incluye el rol en el payload
-      JWT_SECRET, // Secreto para firmar el token
-      { expiresIn: "1h" } // Opcional: tiempo de expiración del token
+      { id: user.id, username: user.username, isAdmin: user.isAdmin },
+      JWT_SECRET,
+      { expiresIn: "1h" }
     );
 
-    // Incluir el `id` y el `role` del usuario en la respuesta
-    res
-      .status(200)
-      .json({
-        message: "Login successful",
-        token,
-        id: user.id,
-        role: user.isAdmin ? "admin" : "user",
-      });
+    // Enviar la respuesta solo una vez
+    return res.status(200).json({
+      token,
+      userId: user.id,
+      userRole: user.isAdmin ? "admin" : "user",
+    });
   } catch (error) {
-    console.error("Error during login:", error);
-    res
-      .status(500)
-      .json({ message: "Server error", error: (error as Error).message });
+    console.error("Error durante el inicio de sesión:", error);
+    return res.status(500).json({
+      message: "Error del servidor",
+      error: (error as Error).message,
+    });
   }
 };
 
@@ -206,18 +218,15 @@ export const registerUser = async (req: Request, res: Response) => {
       state,
       postalCode,
       country,
-      isAdmin = false, // Asigna un valor por defecto si no se proporciona
+      isAdmin = false,
     } = req.body;
 
-    // Asegúrate de que todos los campos obligatorios se están manejando correctamente
     if (!username || !email || !password) {
       return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
-    // Encriptar la contraseña
-    const hashedPassword = await User.hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10); // Cambia a User.hashPassword si tienes un método específico
 
-    // Crear el nuevo usuario
     const user = await User.create({
       username,
       email,
@@ -232,14 +241,12 @@ export const registerUser = async (req: Request, res: Response) => {
       isAdmin,
     });
 
-    // Responder con éxito
     res.status(201).json({
       message: "Usuario registrado con éxito",
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
-        // No incluir la contraseña en la respuesta
       },
     });
   } catch (error) {
